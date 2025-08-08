@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>오늘 점심 뭐 먹지?</title>
+    <!-- 카카오톡, 페이스북, 트위터 등을 위한 설명 메타태그 -->
+    <meta property="og:title" content="점심 추천 랜덤 머신">
+    <meta property="og:description" content="aSSIST 주변 맛집 추천 랜덤 머신">
+    <meta property="og:image" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ianwchoi.github.io/aSSIST_lunchpicker/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+  font-family: sans-serif;
+  background-color: #fefefe;
+  text-align: center;
+  padding: 40px 20px;
+  margin: 0;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+#disclaimer {
+  font-size: 1rem;
+  color: gray;
+  margin-bottom: 20px;
+}
+
+button {
+  font-size: 1.1rem;
+  padding: 12px 24px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+#result {
+  font-size: 1.1rem;
+  margin-top: 10px;
+}
+
+a {
+  color: #0077cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  button {
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+
+  #result {
+    font-size: 1rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <h1>🍱 오늘 점심 뭐 먹지? (aSSIST)</h1>
+  <p id="disclaimer">aSSIST 도보 가능 점심추천머신.</p>
+  <p id="restaurant-count" style="margin-bottom: 10px; color: gray;"></p>
+  <button onclick="pickLunch()">추천 받기</button>
+  <div id="result"></div>
+  <button id="cafe-button" style="display: none; margin-top: 40px; font-size: 0.9rem;" onclick="goToCafe()">
+    ☕ 식사 다 하셨나요? 카페 추천 받기(beta)
+  </button>
+  <script src="script.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
+    const OAUTH_REDIRECT = window.location.origin + window.location.pathname; // 깃허브 페이지일 때 전체 경로 유지
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function ensureAuthUI() {
+      // 간단한 로그인/로그아웃 버튼을 페이지 상단에 삽입
+      const authBarId = 'auth-bar';
+      if (!document.getElementById(authBarId)) {
+        const bar = document.createElement('div');
+        bar.id = authBarId;
+        bar.style.marginBottom = '10px';
+        bar.innerHTML = `
+          <button id="login-btn">구글로 로그인</button>
+          <button id="logout-btn" style="display:none">로그아웃</button>
+          <span id="user-email" style="margin-left:8px; color:gray;"></span>
+        `;
+        const target = document.body.querySelector('h1') || document.body.firstElementChild;
+        document.body.insertBefore(bar, target.nextSibling);
+      }
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      updateAuthButtons(user);
+
+      document.getElementById('login-btn').onclick = async () => {
+        await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: OAUTH_REDIRECT }
+        });
+      };
+      document.getElementById('logout-btn').onclick = async () => {
+        await supabaseClient.auth.signOut();
+        updateAuthButtons(null);
+      };
+    }
+
+    function updateAuthButtons(user) {
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const emailSpan = document.getElementById('user-email');
+      if (!loginBtn || !logoutBtn || !emailSpan) return;
+
+      if (user) {
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        emailSpan.textContent = user.email ? `(${user.email})` : '';
+      } else {
+        loginBtn.style.display = 'inline-block';
+        logoutBtn.style.display = 'none';
+        emailSpan.textContent = '';
+      }
+    }
+
+    // 초기 진입 시 auth 상태 반영
+    document.addEventListener('DOMContentLoaded', ensureAuthUI);
+  </script>
+
+</body>
+</html>
