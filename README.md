@@ -1,6 +1,6 @@
 # aSSIST_lunchpicker
 
-https://ianwchoi.github.io/aSSIST_lunchpicker/
+https://ianwchoi.github.io/aSSIST_lunchpicker/](https://assist-global-mba.github.io/aSSIST_lunchpicker/
 
 ## 새로 추가된 기능
 
